@@ -4,8 +4,11 @@ module ManageIQ::Providers::CiscoIntersight
     def parse
       physical_servers
       physical_server_details
-      physical_racks
       hardwares
+      decomissioned_servers
+      decomissioned_server_details
+      decomissioned_hardwares
+      physical_racks
       firmwares
       physical_chassis
       physical_chassis_details
@@ -91,6 +94,43 @@ module ManageIQ::Providers::CiscoIntersight
             :uid_ems     => storage_controller_reference.moid
           )
         end
+      end
+    end
+
+    def decomissioned_servers
+      collector.decomissioned_servers.each do |s|
+        server = persister.physical_servers.build(
+          :ems_ref         => s.moid,
+          :power_state     => "decomissioned",
+          :raw_power_state => "decomissioned",
+          :type            => "ManageIQ::Providers::CiscoIntersight::PhysicalInfraManager::PhysicalServer"
+        )
+
+        persister.physical_server_computer_systems.build(
+          :managed_entity => server
+        )
+      end
+    end
+
+    def decomissioned_server_details
+      collector.decomissioned_servers.each do |s|
+        server = persister.physical_servers.lazy_find(s.moid)
+        persister.physical_server_details.build(
+          :resource      => server,
+          :model         => "UCSX-210C-M6",
+          :serial_number => "FCH250671HR",
+        )
+      end
+    end
+
+    def decomissioned_hardwares
+      collector.decomissioned_servers.each do |s|
+        server = persister.physical_servers.lazy_find(s.moid)
+        computer = persister.physical_server_computer_systems.lazy_find(server)
+        # disk_capacity and disk_free_space aren't finished yet. Setting their value to -1
+        hardware = persister.physical_server_hardwares.build(
+          :computer_system => computer,
+        )
       end
     end
 

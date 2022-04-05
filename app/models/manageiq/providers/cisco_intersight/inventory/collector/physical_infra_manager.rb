@@ -6,10 +6,10 @@ module ManageIQ::Providers::CiscoIntersight
       set_configuration
 
       physical_servers
+      decomissioned_servers
       physical_racks
       physical_server_network_devices
       firmware_inventory
-
     end
 
     def set_configuration
@@ -46,6 +46,10 @@ module ManageIQ::Providers::CiscoIntersight
 
     def get_storage_api
       IntersightClient::StorageApi.new
+    end
+
+    def get_search_api
+      IntersightClient::SearchApi.new
     end
 
     def get_device_contract_informations
@@ -121,6 +125,11 @@ module ManageIQ::Providers::CiscoIntersight
 
     def physical_servers
       get_compute_api.get_compute_physical_summary_list.results
+    end
+
+    def decomissioned_servers
+      opts = { :filter => "(Lifecycle eq 'Decommissioned') and (IndexMotypes eq  'equipment.Identity')" }
+      get_search_api.get_search_search_item_list(opts).results
     end
 
     def compute_blades
